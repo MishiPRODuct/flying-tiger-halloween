@@ -1,6 +1,6 @@
 # 🎃 Flying Tiger Halloween Agent — local MVP
 
-A buyer-side shopping agent for the **Flying Tiger Copenhagen GB storefront's Halloween collections**, built on [eve](https://eve.dev) (pinned 0.71.2). It searches the live catalog, builds a basket under the store's own rules, asks for approval, and hands off to **Flying Tiger's own checkout** via a cart permalink. **No payment code anywhere in this repo** — card data never touches this system.
+A buyer-side shopping agent for the **Flying Tiger Copenhagen GB storefront's Halloween collections**, built on [eve](https://eve.dev) (pinned 0.71.2). It searches the live catalog, builds a basket under the store's own rules, asks for approval, and creates a **native checkout session via the store's UCP API** — authoritative totals and accepted payment options (Google Pay, card, Shop Pay) shown in chat, ending in the store's hosted checkout URL for address, shipping, and payment. Card data never enters the chat (the store only accepts wallet/tokenized payments from agents, so there is nothing a typed card number could do).
 
 Useful until **22 October 2026** (the "order by" date for Halloween delivery); after that the agent refuses delivery baskets and points to the store locator.
 
@@ -32,7 +32,7 @@ Then: *“I'm ordering on 25 October, party stuff for 10”* → expect the cuto
 | `agent/instructions.md` | The store's rules: 22 Oct cutoff, free shipping ≥ £40 (never pad the basket), £115 import-duty warning, stock re-check, under-3 age rule, never invent products/prices, automated-agent disclosure |
 | `agent/tools/halloween_search.ts` | Live search over the nine Halloween collections (`products.json`, 10-min cache, committed snapshot as offline fallback) |
 | `agent/tools/check_rules.ts` | Deterministic rules check — pure function in `agent/lib/rules.ts`, unit-tested, reusable as the future eval judge |
-| `agent/tools/hand_off_checkout.ts` | **Approval-gated.** Re-checks live stock, returns `flyingtiger.com/en-gb/cart/<variant>:<qty>` — shopper pays on the store's own page (Apple Pay etc.) or abandons |
+| `agent/tools/checkout.ts` | **Approval-gated (first use).** Re-checks live stock, creates a UCP checkout session (`agent/lib/ucp.ts`), relays the store's totals + payment options + hosted pay URL; falls back to a cart permalink if UCP is down |
 | `agent/connections/flying-tiger.ts` | The store's official **UCP MCP endpoint** (catalog tools only). The required hosted agent profile + the empirically derived recipe: `docs/findings.md` §1 |
 | `web/index.html` | The whole UI — Club-app mock + chat overlay, plain HTML/JS, no build step, served by `agent/channels/home.ts` |
 | `scripts/snapshot_catalog.ts` | Frozen dated catalog → `data/halloween-<date>.json` (315 variants, 2026-10-06). Re-run: `node scripts/snapshot_catalog.ts $(date +%F)` |
