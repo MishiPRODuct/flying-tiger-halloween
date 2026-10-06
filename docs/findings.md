@@ -67,3 +67,10 @@ The provided key is **user-scoped** (`sk-ant-usr-…`): every API call must incl
 - "Yes, send it to checkout" → `hand_off_checkout` raised the approval gate; after approve: live stock re-check, checkout link `https://flyingtiger.com/en-gb/cart/58424157045084:8`, no-payment + not-reserved messaging.
 - "Ordering on 25 October, party stuff for 10" → cutoff refusal, `store_locator` link, no delivery basket built.
 - Homepage + chat overlay verified by screenshot at phone width (Club-app mock non-clickable, spinning pumpkin button opens chat; `#chat` deep-link).
+
+## How native can UCP checkout go? (probed live 2026-10-06)
+With the hosted agent profile — and **no Shop-account OAuth** — these all work:
+- `create_cart` → cart GID, authoritative GBP line/total amounts (minor units), item images, 30-day expiry, and a `continue_url` that opens the same cart session on the store.
+- `create_checkout` (needs `line_items`, not `cart_id`; destination uses flat fields `address_country`/`postal_code`) → checkout GID + totals, but with postcode-only it returns `status: "requires_escalation"` with recoverable errors: `delivery_address_required` (full address), `buyer_identity_contact_method_required` (email), `extension_interaction_required`. **No shipping rate is returned until a full address + contact is supplied.**
+- `cancel_cart` / `cancel_checkout` work (tests cleaned up).
+Fully native payment would require: collecting full address + email in chat (brief §5 rule 7 forbids beyond postcode) and attaching a Google Pay token via `update_checkout` → `complete_checkout`. The declared Google Pay handler is bound to `merchant_origin: flyingtiger.com`, so a token minted from our own page/origin wouldn't be valid anyway. Conclusion: basket + checkout creation can be UCP-native; **payment is structurally a hand-off** for this MVP. Optional upgrade: have `hand_off_checkout` create the UCP cart and return its `continue_url` instead of the `/en-gb/cart/<id>:<qty>` permalink (same destination, but session-synced and expiry-aware).
