@@ -384,6 +384,7 @@
 
   // ---------- wiring ----------
   $("openChat").onclick = () => { $("chat").classList.add("open"); box.focus(); };
+  if (location.hash === "#chat") $("chat").classList.add("open");
   $("closeChat").onclick = () => $("chat").classList.remove("open");
   $("newChat").onclick = newBasket;
   $("send").onclick = send;

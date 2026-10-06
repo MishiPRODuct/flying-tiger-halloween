@@ -36,7 +36,7 @@ Yes. `catalog.context = {"address_country":"GB","language":"en-GB","currency":"G
 Yes — primary MVP catalog source. GBP prices, `available` flags, tags, variant ids. **Node's default fetch UA gets HTTP 429 instantly; a browser-style User-Agent works.** Keep the 1s inter-request delay. Snapshot of 2026-10-06: 315 unique variants, 286 in stock, £0.50–£15.
 
 ## 5. Which permalink form opens a GBP cart?
-`https://flyingtiger.com/en-gb/cart/<variant_id>:<qty>,...` (Shopify cart permalink on the en-gb storefront). The UCP `/buy` permalink needs the (OAuth-gated) UCP checkout flow, so not used. _Phone confirmation of the GBP cart pending the device test._
+`https://flyingtiger.com/en-gb/cart/<variant_id>:<qty>,...` (Shopify cart permalink on the en-gb storefront). Verified live 2026-10-06: the permalink 302s straight to the store's checkout page and `cart.js` reports `currency: GBP` with the right lines and totals. The UCP `/buy` permalink needs the (OAuth-gated) UCP checkout flow, so not used.
 
 ## 6. Does `localDev()` accept LAN requests?
 `localDev()` is gated on the process env (`EVE_DEV=1`), not on request origin — so yes for any interface the server listens on. **But `eve dev` binds `127.0.0.1` only by default** (the docs' "all interfaces" claim did not hold on 0.71.2/macOS). For the phone test run: `npm exec -- eve dev -- --host 0.0.0.0` and open `http://<laptop-ip>:2000`.
