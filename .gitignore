@@ -8,3 +8,6 @@ node_modules
 dist
 .DS_Store
 *.tsbuildinfo
+
+# private strategy notes — not for the public repo
+docs/adyen-route.md
