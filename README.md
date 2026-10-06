@@ -44,6 +44,13 @@ Payments/wallets, deploy, eval harness (20 cases × 4 models — next phase; `li
 
 ## Architecture
 
+![System design](docs/architecture.svg)
+
+Numbered flow: ① shopper chats ② agent reasons on Claude ③ browses the live GBP catalog ④ creates a real checkout via UCP ⑤ shopper pays on the store's own page.
+
+<details>
+<summary>Mermaid source (editable version of the same diagram)</summary>
+
 ```mermaid
 flowchart TB
     subgraph Phone["📱 Browser (laptop / phone)"]
@@ -87,6 +94,7 @@ flowchart TB
     T3 -->|"pay_url"| UI
     UI -->|"shopper taps link"| PAY
 ```
+</details>
 
 Snapshot (`data/halloween-<date>.json`) sits under `lib/catalog.ts` as the offline fallback and the future eval's frozen ground truth.
 
