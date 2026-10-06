@@ -41,3 +41,71 @@ Tests: `node --test agent/lib/rules.test.ts` (six edge cases from the brief: £3
 
 ## Deliberately out of scope (MVP)
 Payments/wallets, deploy, eval harness (20 cases × 4 models — next phase; `lib/rules.ts` is judge-ready), memory, accounts, cron. **v2 idea:** replace the chat page with the MishiPay Scan&Go webapp shell.
+
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph Phone["📱 Browser (laptop / phone)"]
+        UI["web/index.html<br/>FT Club mock + chat overlay<br/>(no framework, no build)"]
+    end
+
+    subgraph App["eve app (local dev / Vercel)"]
+        HOME["channels/home.ts<br/>GET / → serves the UI"]
+        HTTP["eve HTTP channel<br/>/eve/v1/session + NDJSON stream"]
+        LOOP["agent loop — claude-sonnet-5<br/>(@ai-sdk/anthropic + workspace header)"]
+        T1["halloween_search"]
+        T2["check_rules"]
+        T3["checkout (approval-gated)"]
+        T4["store_locator"]
+        CAT["lib/catalog.ts<br/>live fetch, 10-min cache,<br/>snapshot fallback"]
+        RULES["lib/rules.ts<br/>pure, unit-tested,<br/>reused by future eval judge"]
+        UCPC["lib/ucp.ts<br/>UCP MCP client"]
+        CONN["connections/flying-tiger.ts<br/>UCP catalog tools for the model"]
+    end
+
+    subgraph Ext["External"]
+        ANTH["Anthropic API"]
+        PJSON["flyingtiger.com /en-gb<br/>collections products.json"]
+        UCP["ftc-row.myshopify.com<br/>/api/ucp/mcp (spec 2026-08-25)"]
+        GIST["public gist<br/>UCP agent profile JSON"]
+        PAY["Hosted checkout page<br/>address + shipping + payment"]
+    end
+
+    UI -->|"POST message / approve"| HTTP
+    HTTP -->|"NDJSON events"| UI
+    HOME --> UI
+    HTTP --> LOOP
+    LOOP --> T1 & T2 & T3 & T4
+    LOOP <-->|tokens| ANTH
+    LOOP --> CONN --> UCP
+    T1 --> CAT --> PJSON
+    T2 --> RULES
+    T3 --> CAT
+    T3 --> UCPC --> UCP
+    UCP -.->|"validates profile"| GIST
+    T3 -->|"pay_url"| UI
+    UI -->|"shopper taps link"| PAY
+```
+
+Snapshot (`data/halloween-<date>.json`) sits under `lib/catalog.ts` as the offline fallback and the future eval's frozen ground truth.
+
+## eve: what it bought us, what it cost us
+
+| Gained | Lost / paid |
+|---|---|
+| The whole agent runtime for free: model loop, durable sessions, NDJSON streaming protocol, steering, cancellation | Pre-1.0 framework (pinned 0.71.2) moving fast; docs lag the code — port, interface binding, and static-file behavior all had to be verified against source |
+| Tools = one TS file with a zod schema; input validation and discovery handled | No static file serving in production builds (`publicAssets: []`) — HTML must be inlined or fs-read (dev-only) |
+| **Human approval gates as a one-liner** (`approval: once()/always()`) incl. the stream events and resume plumbing | eve's `anthropic()` helper couldn't pass custom headers — our user-scoped key forced a drop to `@ai-sdk/anthropic` directly |
+| MCP connections as config, with `providedArguments` to inject the UCP agent profile app-side (model never sees it) | Default auth stack 401s all browsers in production — a public deploy needs a custom AuthFn (demo lock) |
+| Same-origin custom channel for our UI → zero CORS, zero extra hosting | The loop itself is a black box: fine for this demo, less control than hand-rolling if we ever need exotic turn logic |
+| Hot reload across tools/prompt/connections; terminal REPL; one-command Vercel deploy | Session cost controls exist (`limits`) but eval harness remains unexplored |
+
+## UCP: what it bought us, what it cost us
+
+| Gained | Lost / paid |
+|---|---|
+| **Authoritative store data in-chat**: GBP minor-unit prices, live availability, images, straight from the merchant | The agent-profile gate: undocumented, reverse-engineered from error messages; requires hosting a public JSON with exact content-type |
+| Real server-side cart/checkout sessions: synced totals, 30-day expiry, session deep-link (`continue_url`) into hosted checkout | **This store escalates address/shipping/payment to its hosted page** (`requires_escalation`, extension interaction) — native checkout stops at items + totals |
+| A standard: the same client code works against any UCP merchant; payment handlers/capabilities are machine-discoverable | No collection scoping in `search_catalog` — "Halloween only" still needs our own catalog filter (products.json/snapshot) |
+| Future-proof: when the store enables agent-side address/payment, we are one `update_checkout`/`complete_checkout` call away | Rate limits undocumented; spec itself is young (three versions served side-by-side) |
