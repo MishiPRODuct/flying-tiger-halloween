@@ -28,6 +28,7 @@ export default defineTool({
         in_stock: i.in_stock,
         collections: i.collections,
         url: i.url,
+        image: i.image ? `${i.image.split("?")[0]}?width=360` : null,
       })),
     };
   },

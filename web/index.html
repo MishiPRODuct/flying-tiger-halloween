@@ -97,6 +97,8 @@
   .msg.bot{align-self:flex-start; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.08);
     border-bottom-left-radius:6px}
   .msg.bot a{color:var(--grape); font-weight:700; word-break:break-all}
+  .msg.bot img.prod{display:block; width:150px; max-width:70%; border-radius:14px; margin:6px 0;
+    background:#f3ede4; box-shadow:0 1px 6px rgba(0,0,0,.12)}
   .status{align-self:flex-start; color:var(--muted); font-size:13.5px; padding:0 6px; font-style:italic}
   .errline{align-self:center; color:#b02230; font-size:13.5px}
   .approval{align-self:stretch; background:#fff; border:2px solid var(--pumpkin); border-radius:16px;
@@ -221,6 +223,8 @@
   // escape, then markdown links + bare URLs -> tappable links, **bold** -> <b>
   function render(el, raw) {
     let h = esc(raw);
+    h = h.replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g,
+      '<img class="prod" src="$2" alt="$1" loading="lazy">');
     h = h.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
     h = h.replace(/(^|[^"(>])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
     h = h.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
