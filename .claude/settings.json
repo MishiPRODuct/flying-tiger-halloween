@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+      "Bash(tsc:*)",
+      "Bash(curl -s https://flyingtiger.com/*)",
+      "Bash(curl -s https://ftc-row.myshopify.com/*)",
+      "Bash(curl:*)",
+      "Bash(kill:*)",
+      "Bash(lsof:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:flyingtiger.com)",
+      "WebFetch(domain:ftc-row.myshopify.com)",
+      "WebFetch(domain:eve.dev)"
+    ]
+  }
+}
