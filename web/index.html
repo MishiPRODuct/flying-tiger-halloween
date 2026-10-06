@@ -354,7 +354,7 @@
        <p>${generic ? "The agent is asking for your input." : "Hand this basket to Flying Tiger's checkout (" + esc(prettyTool(what)) + ")? Payment happens on flyingtiger.com — never here."}</p>
        <div class="row"><button class="approve">Approve</button><button class="reject">Reject</button></div>`;
     card.querySelector(".approve").onclick = () => answer(req.requestId, "approve", card);
-    card.querySelector(".reject").onclick = () => answer(req.requestId, "reject", card);
+    card.querySelector(".reject").onclick = () => answer(req.requestId, "cancel", card);
     msgs.appendChild(card); scroll(); setBusy(false);
   }
 

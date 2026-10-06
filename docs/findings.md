@@ -42,7 +42,7 @@ Yes — primary MVP catalog source. GBP prices, `available` flags, tags, variant
 `localDev()` is gated on the process env (`EVE_DEV=1`), not on request origin — so yes for any interface the server listens on. **But `eve dev` binds `127.0.0.1` only by default** (the docs' "all interfaces" claim did not hold on 0.71.2/macOS). For the phone test run: `npm exec -- eve dev -- --host 0.0.0.0` and open `http://<laptop-ip>:2000`.
 
 ## 7. Approval stream event
-`input.requested` with `data.requests[]`, each `{kind: "tool-approval", requestId, action: {callId, ...}}`; answer with `POST /eve/v1/session/<id> {"inputResponses":[{"requestId":"...","optionId":"approve"}]}` (a plain message `"approve"`/`"reject"` also resolves it). The chat page logs every raw event to the browser console (`[eve]` prefix) — copy the exact shape from there on first real run.
+Verified live 2026-10-06. `input.requested` with `data.requests[]`; each request is `{kind: "tool-approval", requestId: "aitxt-…", prompt, display: "confirmation", allowFreeform: false, options: [{id: "approve", label: "Approve"}, {id: "cancel", label: "Cancel"}], action: {kind: "tool-call", callId, toolName, input}}`. Answer with `POST /eve/v1/session/<id> {"inputResponses":[{"requestId":"…","optionId":"approve"|"cancel"}]}` — note the decline option id is **cancel**, not "reject". The chat page's buttons send exactly these.
 
 ## 8. eve evals for snapshot cases
 Not investigated (eval harness descoped from this MVP). `eve eval` exists in the scaffold scripts; revisit when building the judge.
@@ -58,3 +58,12 @@ eve configures Nitro with `publicAssets: []` (no static dir). `fs.readFile(web/i
 - Model: `anthropic("claude-sonnet-5")` via `eve/models/anthropic`, reads `ANTHROPIC_API_KEY` from `.env` — one line to switch models later in `agent/agent.ts`.
 - Free shipping ≥ £40 and the £115 import-duty note are confirmed on the live GB site. The sub-£40 shipping fee is **not published** — the agent says "calculated at checkout".
 - No rate-limit headers on the MCP endpoint; `products.json` 429s on non-browser UAs (see #4).
+
+## Model credential quirk (verified 2026-10-06)
+The provided key is **user-scoped** (`sk-ant-usr-…`): every API call must include an `anthropic-workspace-id` header or Anthropic returns 400. `GET /v1/organizations/workspaces` works with the bare key and lists the workspaces; only **"cursor dev"** (`wrkspc_01N5xsJ8ExFrbYdqAkERPrbh`) accepts this key. eve's built-in `anthropic()` helper cannot add headers, so `agent/agent.ts` uses `createAnthropic({apiKey, headers})` from `@ai-sdk/anthropic` directly, with the workspace id in `.env` as `ANTHROPIC_WORKSPACE_ID`.
+
+## End-to-end verification (2026-10-06, live agent on claude-sonnet-5)
+- "Trick or treat bags for 8 kids under £25" → disclosure, `halloween_search`, 8× £3 Hocus Pocus buckets (£24), `check_rules` pass with free-shipping-gap warning, no basket padding.
+- "Yes, send it to checkout" → `hand_off_checkout` raised the approval gate; after approve: live stock re-check, checkout link `https://flyingtiger.com/en-gb/cart/58424157045084:8`, no-payment + not-reserved messaging.
+- "Ordering on 25 October, party stuff for 10" → cutoff refusal, `store_locator` link, no delivery basket built.
+- Homepage + chat overlay verified by screenshot at phone width (Club-app mock non-clickable, spinning pumpkin button opens chat; `#chat` deep-link).

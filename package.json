@@ -15,6 +15,7 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.72",
     "@vercel/connect": "2.2.0",
     "ai": "^7.0.105",
     "eve": "0.71.2",
@@ -22,10 +23,11 @@
   },
   "devDependencies": {
     "@types/node": "24.x",
+    "just-bash": "^3.6.0",
+    "microsandbox": "^0.5.5",
     "typescript": "7.0.2"
   },
   "engines": {
     "node": "24.x"
   }
-
 }
