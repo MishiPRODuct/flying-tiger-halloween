@@ -4,6 +4,8 @@ Turn any UCP-enabled store (every Shopify store serves `/.well-known/ucp`) into 
 
 This generalizes the [Flying Tiger Halloween MVP](../README.md) (which stays untouched at the repo root): everything brand-specific became one JSON file. Proven on two live stores the same afternoon — **Flying Tiger GB** (scoped collections + trading rules) and **MUJI US** (full catalog, onboarded with zero prior knowledge by one probe command).
 
+![Retailer onboarding](docs/onboarding.svg)
+
 ## What the brand does — the entire integration
 
 Imagine ABC store, on Shopify:
