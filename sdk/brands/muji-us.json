@@ -1,0 +1,49 @@
+{
+  "name": "muji-us",
+  "displayName": "MUJI Assistant",
+  "storefront": {
+    "domain": "www.muji.us",
+    "basePath": "",
+    "market": {
+      "country": "US",
+      "language": "en-US",
+      "currency": "USD"
+    }
+  },
+  "catalog": {
+    "scope": "all"
+  },
+  "rules": {
+    "freeShippingThreshold": null,
+    "dutiesThreshold": null,
+    "orderCutoffDate": null,
+    "cutoffMessage": null,
+    "ageSensitiveKeywords": [],
+    "notes": [
+      "TODO: confirm market/currency and add the brand's trading rules"
+    ]
+  },
+  "persona": {
+    "tone": "calm, minimal, helpful \u2014 like the brand.",
+    "scope": "You help shoppers find and buy products from MUJI.",
+    "disclosure": true,
+    "welcome": "Hi! I'm the MUJI shopping assistant. What are you looking for today?",
+    "examplePrompt": "An aroma diffuser and a candle under $80"
+  },
+  "links": {
+    "storeLocator": null,
+    "help": null
+  },
+  "theme": {
+    "accent": "#7c0019",
+    "bg": "#ffffff",
+    "userBubble": "#111111",
+    "botBubble": "#f4f1ec",
+    "launcher": "\ud83e\uddfa",
+    "headerBg": "#ffffff",
+    "headerText": "#111111"
+  },
+  "model": {
+    "id": "claude-sonnet-5"
+  }
+}

@@ -42,6 +42,10 @@ Tests: `node --test agent/lib/rules.test.ts` (six edge cases from the brief: £3
 ## Deliberately out of scope (MVP)
 Payments/wallets, deploy, eval harness (20 cases × 4 models — next phase; `lib/rules.ts` is judge-ready), memory, accounts, cron. **v2 idea:** replace the chat page with the MishiPay Scan&Go webapp shell.
 
+## 📦 New: the SDK experiment
+
+The MVP below generalizes into a **plug-and-play shopping-agent SDK** — any UCP/Shopify store becomes a brand-owned agent via one config file and a 2-line embed snippet. Proven live on Flying Tiger **and MUJI US**. See **[sdk/README.md](sdk/README.md)**.
+
 ## Architecture
 
 ![System design](docs/architecture.svg)

@@ -11,3 +11,4 @@ dist
 
 # private strategy notes — not for the public repo
 docs/adyen-route.md
+sdk/agent/instructions.md

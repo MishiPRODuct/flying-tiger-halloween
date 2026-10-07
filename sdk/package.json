@@ -1,0 +1,27 @@
+{
+  "name": "ucp-shopping-agent-sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "imports": { "#*": "./agent/*" },
+  "scripts": {
+    "predev": "node scripts/render.ts",
+    "prestart": "node scripts/render.ts",
+    "dev": "eve dev",
+    "start": "eve start",
+    "build": "eve build",
+    "init-brand": "node scripts/init.ts",
+    "test": "node --test agent/lib/rules.test.ts",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.49",
+    "ai": "^7.0.105",
+    "eve": "0.71.2",
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "24.x",
+    "typescript": "7.0.2"
+  },
+  "engines": { "node": ">=24" }
+}

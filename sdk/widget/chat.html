@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shopping assistant</title>
+<script>window.BRAND = /*__BRAND__*/null;</script>
+<style>
+  :root{
+    --accent:#111111; --bg:#ffffff; --user:#111111; --bot:#f4f1ea;
+    --headerBg:#ffffff; --headerText:#111111; --ink:#111; --chipborder:#d8d8d8;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; height:100%; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  body{display:flex; flex-direction:column; background:var(--bg)}
+  .chathead{display:flex; align-items:center; gap:10px; padding:14px 16px 12px;
+    background:var(--headerBg); color:var(--headerText); border-bottom:1px solid rgba(0,0,0,.08)}
+  .chathead .emoji{font-size:24px}
+  .chathead .t{font-weight:800; font-size:19px; flex:1; letter-spacing:-.4px}
+  .chathead .sub{font-size:12px; opacity:.6; font-weight:600}
+  .iconbtn{background:none; border:none; color:var(--headerText); font-size:22px; cursor:pointer; padding:6px}
+  .msgs{flex:1; overflow-y:auto; padding:16px 14px 8px; display:flex; flex-direction:column; gap:10px}
+  .msg{max-width:86%; padding:12px 15px; border-radius:18px; font-size:16px; line-height:1.4;
+    white-space:pre-wrap; word-wrap:break-word; font-weight:500}
+  .msg.user{align-self:flex-end; background:var(--user); color:#fff; border-bottom-right-radius:6px; font-weight:700}
+  .msg.bot{align-self:flex-start; background:var(--bot); color:var(--ink); border-bottom-left-radius:6px}
+  .msg.bot b{font-weight:800}
+  .msg.bot a{color:var(--accent); font-weight:800; word-break:break-all; text-decoration:underline; text-underline-offset:2px}
+  .msg.bot img.prod{display:block; width:220px; max-width:88%; border-radius:16px; margin:8px 0;
+    background:#fff; box-shadow:0 1px 6px rgba(0,0,0,.1)}
+  .status{align-self:flex-start; color:#8a8a8a; font-size:13.5px; padding:0 6px; font-style:italic; font-weight:600}
+  .errline{align-self:center; color:#b02230; font-size:13.5px; font-weight:700}
+  .approval{align-self:stretch; background:var(--bot); border-radius:22px; padding:18px 16px 16px;
+    box-shadow:0 0 0 2px var(--accent) inset}
+  .approval h3{margin:0 0 6px; font-size:18px; font-weight:800; letter-spacing:-.3px}
+  .approval p{margin:0 0 14px; font-size:14.5px; color:#555; line-height:1.35}
+  .approval .row{display:flex; gap:10px}
+  .approve,.reject{flex:1; border:none; border-radius:999px; padding:13px; font-weight:800; font-size:16px; cursor:pointer}
+  .approve{background:var(--ink); color:#fff}
+  .reject{background:#fff; color:var(--ink); border:1px solid var(--chipborder)}
+  .inputbar{display:flex; gap:8px; padding:10px 12px calc(12px + env(safe-area-inset-bottom)); background:var(--bg);
+    border-top:1px solid rgba(0,0,0,.08)}
+  .inputbar input{flex:1; border:1px solid var(--chipborder); border-radius:999px; padding:12px 18px;
+    font-size:16px; outline:none; font-weight:600; color:var(--ink); background:#fff}
+  .inputbar input:focus{border-color:var(--ink)}
+  .send{background:var(--ink); color:#fff; border:none; border-radius:999px; padding:0 22px; font-weight:800; font-size:16px; cursor:pointer}
+  .stop{background:#fff; color:#b02230; border:1px solid #b02230; border-radius:999px; padding:0 14px; font-weight:800; cursor:pointer; display:none}
+</style>
+</head>
+<body>
+  <div class="chathead">
+    <span class="emoji" id="hEmoji">🛍️</span>
+    <div class="t" id="hTitle">Shopping assistant<div class="sub" id="hSub">automated agent · pays on the store</div></div>
+    <button class="iconbtn" id="newChat" title="New basket">↺</button>
+    <button class="iconbtn" id="closeChat" title="Close">✕</button>
+  </div>
+  <div class="msgs" id="msgs"></div>
+  <div class="inputbar">
+    <input id="box" type="text" placeholder="Ask about products…" autocomplete="off">
+    <button class="stop" id="stop">Stop</button>
+    <button class="send" id="send">Send</button>
+  </div>
+
+<script>
+(() => {
+  const B = window.BRAND || {};
+  const root = document.documentElement.style;
+  const T = B.theme || {};
+  if (T.accent) root.setProperty("--accent", T.accent);
+  if (T.bg) root.setProperty("--bg", T.bg);
+  if (T.userBubble) root.setProperty("--user", T.userBubble);
+  if (T.botBubble) root.setProperty("--bot", T.botBubble);
+  if (T.headerBg) root.setProperty("--headerBg", T.headerBg);
+  if (T.headerText) root.setProperty("--headerText", T.headerText);
+
+  const $ = (id) => document.getElementById(id);
+  $("hEmoji").textContent = T.launcher || "🛍️";
+  $("hTitle").childNodes[0].textContent = B.displayName || "Shopping assistant";
+  $("hSub").textContent = "automated agent · " + (B.domain || "") + " · pays on the store";
+  document.title = B.displayName || "Shopping assistant";
+
+  const msgs = $("msgs"), box = $("box");
+  box.placeholder = B.examplePrompt ? "e.g. " + B.examplePrompt : box.placeholder;
+  let sessionId = null, streaming = false, eventCount = 0;
+  let curBot = null, statusEl = null, turnActive = false;
+
+  const scroll = () => { msgs.scrollTop = msgs.scrollHeight; };
+  function addMsg(cls, text) {
+    const d = document.createElement("div");
+    d.className = "msg " + cls;
+    if (text) d.textContent = text;
+    msgs.appendChild(d); scroll();
+    return d;
+  }
+  function setStatus(text) {
+    if (!text) { statusEl?.remove(); statusEl = null; return; }
+    if (!statusEl) { statusEl = document.createElement("div"); statusEl.className = "status"; }
+    statusEl.textContent = text; msgs.appendChild(statusEl); scroll();
+  }
+  function setBusy(busy) {
+    turnActive = busy;
+    $("stop").style.display = busy ? "block" : "none";
+    $("send").disabled = busy;
+  }
+  const esc = (s) => s.replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  function render(el, raw) {
+    let h = esc(raw);
+    h = h.replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g, '<img class="prod" src="$2" alt="$1" loading="lazy">');
+    h = h.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    h = h.replace(/(^|[^"(>])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+    h = h.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+    el.innerHTML = h;
+  }
+
+  async function post(path, body) {
+    const res = await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+    if (!res.ok) throw new Error("HTTP " + res.status + " on " + path);
+    return res.json();
+  }
+
+  async function send() {
+    const text = box.value.trim();
+    if (!text || turnActive) return;
+    box.value = "";
+    addMsg("user", text);
+    setBusy(true);
+    try {
+      if (!sessionId) {
+        const r = await post("/eve/v1/session", { message: text });
+        sessionId = r.sessionId;
+        stream();
+      } else {
+        await post("/eve/v1/session/" + sessionId, { message: text });
+      }
+    } catch (e) { addErr("Could not reach the agent: " + e.message); setBusy(false); }
+  }
+  function addErr(t){ const d=document.createElement("div"); d.className="errline"; d.textContent=t; msgs.appendChild(d); scroll(); }
+
+  async function stream() {
+    if (streaming || !sessionId) return;
+    streaming = true;
+    try {
+      const res = await fetch(`/eve/v1/session/${sessionId}/stream?startIndex=${eventCount}`);
+      if (!res.ok) throw new Error("stream HTTP " + res.status);
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let nl;
+        while ((nl = buf.indexOf("\n")) >= 0) {
+          const lineText = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (!lineText) continue;
+          eventCount++;
+          try { handle(JSON.parse(lineText)); } catch (e) { console.warn("bad event", e); }
+        }
+      }
+    } catch (e) { console.warn("stream dropped", e); }
+    finally { streaming = false; if (sessionId) setTimeout(stream, 1200); }
+  }
+
+  const prettyTool = (n) => (n || "tool").replace(/^.*__/, "").replace(/_/g, " ");
+
+  function handle(ev) {
+    const t = ev.type, d = ev.data || {};
+    switch (t) {
+      case "turn.started": setBusy(true); curBot = null; break;
+      case "message.appended": {
+        if (d.messageDelta == null) break;
+        if (!curBot) { curBot = addMsg("bot", ""); curBot._raw = ""; }
+        curBot._raw += d.messageDelta;
+        render(curBot, curBot._raw); scroll();
+        break;
+      }
+      case "message.completed": {
+        if (d.message != null) { if (!curBot) curBot = addMsg("bot", ""); curBot._raw = d.message; render(curBot, curBot._raw); }
+        curBot = null; setStatus(null); scroll();
+        break;
+      }
+      case "actions.requested": {
+        const names = (d.actions || []).map((a) => prettyTool(a.name || a.toolName)).join(", ");
+        setStatus("⏳ " + (names || "working") + "…");
+        break;
+      }
+      case "action.result": setStatus(null); break;
+      case "input.requested":
+        for (const req of d.requests || []) showApproval(req);
+        break;
+      case "input.resolved":
+        document.querySelectorAll(".approval").forEach((n) => n.remove());
+        break;
+      case "turn.waiting": if (d.on === "input") setBusy(false); break;
+      case "session.waiting": setBusy(false); setStatus(null); break;
+      case "turn.completed": case "turn.cancelled": setBusy(false); setStatus(null); curBot = null; break;
+      case "turn.failed": case "session.failed": case "step.failed":
+        addErr("⚠️ " + (d.message || d.code || "The agent hit an error."));
+        setBusy(false); setStatus(null);
+        break;
+    }
+  }
+
+  function showApproval(req) {
+    document.querySelectorAll(".approval").forEach((n) => n.remove());
+    const card = document.createElement("div");
+    card.className = "approval";
+    card.innerHTML =
+      `<h3>🛒 Approval needed</h3>
+       <p>Create the checkout on the store? Payment happens on ${esc(B.domain || "the store")} — never here.</p>
+       <div class="row"><button class="approve">Approve</button><button class="reject">Cancel</button></div>`;
+    card.querySelector(".approve").onclick = () => answer(req.requestId, "approve", card);
+    card.querySelector(".reject").onclick = () => answer(req.requestId, "cancel", card);
+    msgs.appendChild(card); scroll(); setBusy(false);
+  }
+
+  async function answer(requestId, optionId, card) {
+    card.querySelectorAll("button").forEach((b) => (b.disabled = true));
+    setBusy(true);
+    try { await post("/eve/v1/session/" + sessionId, { inputResponses: [{ requestId, optionId }] }); card.remove(); }
+    catch { try { await post("/eve/v1/session/" + sessionId, { message: optionId }); card.remove(); } catch (e2) { addErr("Could not send: " + e2.message); setBusy(false); } }
+  }
+
+  async function stopTurn() { if (sessionId) { try { await post("/eve/v1/session/" + sessionId + "/cancel"); } catch {} } }
+  function newBasket() {
+    sessionId = null; eventCount = 0; curBot = null; setBusy(false); setStatus(null);
+    msgs.innerHTML = "";
+    welcome();
+  }
+  function welcome() {
+    const d = addMsg("bot", "");
+    render(d, (B.welcome || "Hi! What are you shopping for?") + (B.examplePrompt ? `\n\ne.g. **“${B.examplePrompt}”**` : ""));
+  }
+
+  $("closeChat").onclick = () => { parent.postMessage({ type: "ucp-agent:close" }, "*"); };
+  $("newChat").onclick = newBasket;
+  $("send").onclick = send;
+  $("stop").onclick = stopTurn;
+  box.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
+  welcome();
+})();
+</script>
+</body>
+</html>

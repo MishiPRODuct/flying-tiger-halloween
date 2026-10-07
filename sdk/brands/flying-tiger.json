@@ -1,0 +1,41 @@
+{
+  "name": "flying-tiger",
+  "displayName": "Halloween helper",
+  "storefront": {
+    "domain": "flyingtiger.com",
+    "basePath": "/en-gb",
+    "market": { "country": "GB", "language": "en-GB", "currency": "GBP" }
+  },
+  "catalog": {
+    "scope": "collections",
+    "handles": [
+      "happy-halloween", "halloween-decorations", "halloween-table-setting",
+      "halloween-diy", "trick-or-treat", "halloween-create-play",
+      "halloween-dress-up", "halloween-party", "gothic-glam"
+    ]
+  },
+  "rules": {
+    "freeShippingThreshold": 40,
+    "dutiesThreshold": 115,
+    "orderCutoffDate": "2026-10-22",
+    "cutoffMessage": "Orders after this date will not arrive before Halloween — suggest buying in store.",
+    "ageSensitiveKeywords": ["make-?up", "face paint", "fake blood", "glitter gel", "nail", "tattoo"],
+    "notes": []
+  },
+  "persona": {
+    "tone": "fun, festive, concise — the shopper is on a phone.",
+    "scope": "You help one shopper build a Halloween basket from the Halloween collections only; anything else is out of scope.",
+    "disclosure": true,
+    "welcome": "👋 I'm the Flying Tiger Halloween helper. Tell me what you need!",
+    "examplePrompt": "Trick or treat bags for 8 kids under £25"
+  },
+  "links": {
+    "storeLocator": "https://flyingtiger.com/en-gb/pages/store-locator",
+    "help": "https://flyingtiger.com/en-gb/pages/faq"
+  },
+  "theme": {
+    "accent": "#b02230", "bg": "#ffffff", "userBubble": "#111111",
+    "botBubble": "#efe7dd", "launcher": "🎃", "headerBg": "#ffffff", "headerText": "#111111"
+  },
+  "model": { "id": "claude-sonnet-5" }
+}
